@@ -1,0 +1,94 @@
+@font-face {
+    font-family: IRANSANS;
+    src: url("/fonts/IRANSansFaNum.ttf");
+}
+
+html,body,h1,h2,h3,h4,h5,h6,p,span,label,a,li,div {
+    font-family: IRANSANS;
+}
+
+.content {
+    padding: 10px;
+}
+
+.mynav {
+    background-color: #333;
+    /*border-radius: 5px;*/
+    z-index:9;
+}
+
+.toggle-bar {
+    display: none;
+    border-radius: 5px;
+}
+
+.mynav ul, .toggle-bar ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    text-align: right;
+}
+
+@media screen and (min-width: 769px) {
+    .mynav ul li, .toggle-bar ul li {
+        float: right;
+    }
+}
+
+.mynav ul li a, .toggle-bar ul li a {
+    display: block;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+.mynav ul li a:hover, .toggle-bar ul li a:hover {
+    background-color: #4e73df;
+    color:#333;
+}
+
+.active {
+    background-color: #224abe;
+    color:white;
+}
+
+.inactive {
+    color:white;
+}
+
+@media screen and (max-width: 768px) {
+    .mynav {
+        display: none;
+        opacity:0.9;
+        position: fixed;
+        top:0;
+        left:0;
+        right:0;
+    }
+    .toggle-bar {
+        display: block;
+    }
+}
+
+.x {
+    background-color:#224abe;/*#3259ca;*/
+    /*background-image:linear-gradient(180deg, #4e73df 10%, #224abe 100%);*/
+    /*background-size:cover;*/
+}
+
+.loader {
+    display: none;
+    position:fixed;
+    left:0;
+    top:0;
+    width:100%;
+    height:100%;
+    z-index:99;
+    background-color:#333;
+    opacity: 0.8;
+}
+
+.alert {
+    padding: 0.5rem;
+}
