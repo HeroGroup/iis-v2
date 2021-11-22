@@ -1,4 +1,5 @@
 /.idea
+/.vscode
 /Listener/node_modules
 /Listener/logs
 /Listener/daemon
