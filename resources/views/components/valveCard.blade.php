@@ -25,7 +25,7 @@
                 <span><i class="fa fa-faucet"></i> &nbsp; وضعیت شیر</span>
             </div>
             <div class="col-md-6 text-center">
-                <div id="{{$id}}-valve">{{\Illuminate\Support\Facades\DB::table('statuses')->find($status)->StatusTitle}}</div>
+                <div id="{{$id}}-valve">{{\Illuminate\Support\Facades\DB::table('statuses')->find($status)->StatusName}}</div>
             </div>
         </div>
 
