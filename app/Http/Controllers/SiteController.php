@@ -109,6 +109,42 @@ class SiteController extends Controller
         return view('site.reports', compact('years', 'months'));
     }
 
+    public function configuration()
+    {
+        $deviceId = session('device_id');
+        $valves = DB::table('zones')
+            ->join('valvecontrollers','zones.ID','valvecontrollers.ZoneID')
+            ->where('zones.MainControllerID',$deviceId)
+            ->select('valvecontrollers.ID','valvecontrollers.StatusID')
+            ->pluck('valvecontrollers.ID','valvecontrollers.ID');
+
+
+        $sensors=DB::table('sensorfeatures')
+             ->select('ID','SensorFeatureName','StatusID')
+             ->where('StatusID','=', 8)
+             ->get();
+
+        return view('site.configuration', compact('sensors','valves'));
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->mysensors;
+        $id=$request->valve_id;
+
+         DB::table('dataloggersensors')->where('ControllerID', $id)->delete();
+
+        foreach($data as $key => $value) {
+            DB::table('dataloggersensors')->insert([
+            'ControllerID' =>$id,
+            'SensorFeatureID' => $key,
+            'StatusID'=>8
+            ]);
+        }
+
+        return back()->withInput();
+    }
+
     public function about()
     {
         return view('site.about');
@@ -140,6 +176,12 @@ class SiteController extends Controller
     {
         $device .= '000';
         return $this->success("",['isOpen' => false]);
+    }
+
+    public function getValveSensors($valve)
+    {
+        $sensors = DB::table('dataloggersensors')->where('ControllerID',$valve)->get();
+        return $this->success("success", $sensors);
     }
 
 }
