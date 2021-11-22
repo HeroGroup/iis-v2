@@ -37,7 +37,7 @@
                 <div class="container" id="menu-container">
                     <ul>
                         <li id="close-menu-btn" style="display: none;"><a href="#" onclick="closeMenu()" style="font-size:20px;">&times;</a></li>
-                        <li><a href="#" class="inactive">شناسه 1001</a></li>
+                        <li><a href="#" class="inactive">@if(isset($mainID)) {{$mainID}} @endif</a></li>
                         <li><a class="@if(isset($active) && $active == 'home') active @else inactive @endif" href="{{route('site.home')}}">وضعیت شیر</a></li>
                         <li><a class="@if(isset($active) && $active == 'settings') active @else inactive @endif" href="{{route('site.settings')}}">وضعیت آب</a></li>
                         <li><a class="@if(isset($active) && $active == 'reports') active @else inactive @endif" href="{{route('site.reports')}}">گزارشات</a></li>

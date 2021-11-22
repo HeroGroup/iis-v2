@@ -92,3 +92,7 @@ html,body,h1,h2,h3,h4,h5,h6,p,span,label,a,li,div {
 .alert {
     padding: 0.5rem;
 }
+
+.changing-item {
+    transition: color 300ms linear;
+}

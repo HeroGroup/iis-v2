@@ -1,4 +1,7 @@
 /.idea
+/Listener/node_modules
+/Listener/logs
+/Listener/daemon
 /node_modules
 /public/hot
 /public/storage

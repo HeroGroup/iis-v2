@@ -1,4 +1,4 @@
-@extends('layouts.main', ['title' => 'تنظیمات', 'active' => 'home'])
+@extends('layouts.main', ['title' => 'تنظیمات', 'active' => 'home', 'mainID' => $device])
 @section('content')
     <style>
         #wait {
@@ -33,13 +33,8 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-3 text-center">
-                            <!--<label>حالت:&nbsp;</label>
-                            <input type="radio" id="manual" name="mode" value="دستی" checked onchange="modeChange(this.id)">
-                            <label for="manual">دستی</label>
-                            <input type="radio" id="intelligent" name="mode" value="هوشمند" onchange="modeChange(this.id)">
-                            <label for="intelligent">هوشمند</label>-->
-                            <button class="mode btn btn-outline-info" id="manual" onclick="modeChange('manual')">دستی</button>
-                            <button class="mode btn btn-outline-info" id="intelligent" onclick="modeChange('intelligent')">هوشمند</button>
+                            <button class="mode btn btn-outline-info" id="mode-1" onclick="modeChange('1',true)">دستی</button>
+                            <button class="mode btn btn-outline-info" id="mode-0" onclick="modeChange('0',true)">هوشمند</button>
                         </div>
                         <div class="col-md-3">
                             <div class="row">
@@ -47,7 +42,7 @@
                                     <span><i class="fa fa-thermometer-half"></i> &nbsp; دمای هوا</span>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="badge fs-6 w-50" style="background-color: #9b59b6;" id="tmp"></div>
+                                    <div class="badge fs-6 w-75" style="background-color: #9b59b6;" id="tmp"></div>
                                 </div>
                             </div>
                         </div>
@@ -57,7 +52,7 @@
                                     <span><i class="fa fa-tint"></i> &nbsp; رطوبت هوا</span>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="badge fs-6 w-50" style="background-color: #e67e22;" id="hmdt"></div>
+                                    <div class="badge fs-6 w-75" style="background-color: #e67e22;" id="hmdt"></div>
                                 </div>
                             </div>
                         </div>
@@ -87,14 +82,26 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        @foreach($valves as $valve)
-                            <div class="col-lg-4" style="padding:20px;">
-                                @component('components.valveCard', [
-                                    'id' => $valve->ID,
-                                    'status' => $valve->StatusID
-                                ])@endcomponent
+                    @foreach($zones as $zone)
+                        <div class="col-lg-6" style="padding:20px;">
+                            @component('components.valveCard', [
+                                'id' => $zone->ID,
+                                'status' => $zone->StatusID
+                            ])@endcomponent
+                            <hr>
+                            <div class="row">
+                                @foreach($valves[$zone->zoneID] as $valve)
+                                    <div class="col-lg-6" style="padding:20px;">
+                                        @component('components.valveCardShrinked', [
+                                            'id' => $valve->ID,
+                                            'status' => $valve->StatusID,
+                                            'master' => $zone->ID
+                                        ])@endcomponent
+                                    </div>
+                                @endforeach
                             </div>
-                        @endforeach
+                        </div>
+                    @endforeach
                     </div>
                 </div>
             </div>
@@ -109,6 +116,12 @@
 
         setTopic(`m-iis-${device}`);
 
+        $(document).ready(function() {
+            let currentIrrigationModeID = "{{$irrigationModeID}}";
+            console.log("currentIrrigationModeID",currentIrrigationModeID);
+            modeChange(currentIrrigationModeID);
+        });
+
         function changeValveStatus(id,checked) {
             clearTimeout(sendTimeout);
 
@@ -118,7 +131,7 @@
             }, 7000);
 
             const status = checked ? "1" : "2";
-            if(sendMessage(`s-iis-${device}`,`{"func":"PutVCS","main_id":${device},"valve_id":${id},"status":${status}}`)) { // connection is established
+            if(sendMessage(`s-iis-${device}`,`{"func":"PutVCS","main_id":${device},"valve_id":${id},"status":${status},"valve_open_timeout":3600,"irr_turn":0}`)) { // connection is established
                 var helpDiv = document.getElementById(`${id}-help`);
                 helpDiv.innerText = status === "1" ? "دستور باز کردن شیر ارسال شد. لطفا کمی صبر کنید..." : "دستور بستن شیر ارسال شد. لطفا کمی صبر کنید...";
                 helpDiv.classList.remove("alert-info");
@@ -127,35 +140,17 @@
                 helpDiv.style.visibility = "visible";
 
                 requests[id] = {"status":status,"count":0};
-
-                // sendWithInterval(id,status);
             }
-        }
-
-        function sendWithInterval(node,status) {
-            // var counter = 0,
-            // sendInterval = setInterval(function() {
-            // if (counter<3) {
-            sendMessage("s-iis-"+device,`{"func":"PutVCS","main_id":${device},"valve_id":${node},"status":${status}}`);
-            // counter++;
-            // } else {
-            // clearInterval(sendInterval);
-            // }
-            // }, 7000);
-        }
-
-        function checkIfChangeIsImplemented(wait,node) {
-            if(wait !== requests[node].status) { // send request again
-                sendWithInterval(node,requests[node].status);
-            }
-        }
-
-        function removeAllWhitespace(input) {
-            return input.replace(/ /g,'');
         }
 
         function parseMessage(msg) {
-            var incomingMessage = JSON.parse(msg);
+            var incomingMessage;
+            try {
+                incomingMessage = JSON.parse(msg);
+            } catch(e) {
+                console.log(e);
+                return;
+            }
 
             switch (incomingMessage.func) {
                 case 'PostMCI':
@@ -163,9 +158,11 @@
                         // document.getElementById("wait").style.display = "none";
                         // $("#wait").fadeOut("slow");
 
-                        document.getElementById("tmp").innerText = incomingMessage.tmp +"°C";
-                        document.getElementById("hmdt").innerText = incomingMessage.hmdt === "-1" ? "نامشخص" : incomingMessage.hmdt + "%";
-                        // document.getElementById("bat").innerText = incomingMessage.bat + "%";
+                        // battery, temp, humidity
+                        let controllerSensors = incomingMessage.sensors.split('&');
+                        document.getElementById("tmp").innerText = controllerSensors[1] < -40 ? "نامشخص" :  controllerSensors[1]+"°C";
+                        document.getElementById("hmdt").innerText = controllerSensors[2] === "-1" ? "نامشخص" : controllerSensors[2] + "%";
+                        // document.getElementById("bat").innerText = controllerSensors[0] + "%";
 
                         var nodes = incomingMessage.nodes;
                         for(var i=0;i<nodes.length;i++) {
@@ -188,10 +185,22 @@
                                     valve = "بسته";
                                     break;
                                 case "3":
-                                    valve = "در حال باز شدن";
+                                    valve = "باز"; // "در حال باز شدن"; // comment for now
                                     break;
                                 case "4":
-                                    valve = "در حال بسته شدن";
+                                    valve = "بسته"; // "در حال بسته شدن"; // comment for now
+                                    break;
+                                case "5":
+                                    valve = "باز";
+                                    break;
+                                case "6":
+                                    valve = "بسته";
+                                    break;
+                                case "7":
+                                    valve = "باز"; // "در حال باز شدن"; // comment for now
+                                    break;
+                                case "8":
+                                    valve = "بسته"; // "در حال بسته شدن"; // comment for now
                                     break;
                                 default:
                                     valve = "نامشخص";
@@ -199,35 +208,55 @@
                             }
 
                             document.getElementById(`${nodeId}-valve`).innerText = valve;
-                            document.getElementById(`${nodeId}-soil`).innerText = nodeSoilHumidity === "-1" ? "نامشخص" : nodeSoilHumidity + "%";
+                            document.getElementById(`${nodeId}-soil`).innerText = nodeSoilHumidity < 0 ? "نامشخص" : nodeSoilHumidity + "%";
                             document.getElementById(`${nodeId}-temp`).innerText = nodeTemperature < -40 ? "نامشخص" : nodeTemperature +"°C";
-                            document.getElementById(`${nodeId}-humidity`).innerText = nodeHumidity === "-1" ? "نامشخص" : nodeHumidity + "%";
-                            document.getElementById(`${nodeId}-battery`).innerText = nodeBatteryCharge + "%";
+                            document.getElementById(`${nodeId}-humidity`).innerText = nodeHumidity < 0 ? "نامشخص" : nodeHumidity + "%";
+                            document.getElementById(`${nodeId}-battery`).innerText = nodeBatteryCharge < 0 ? "نامشخص" : nodeBatteryCharge + "%";
 
-                            if(nodeStatus >= "1" && nodeStatus <= "4") {
+                            if(nodeStatus >= "1" && nodeStatus <= "8") {
                                 var helpDiv = document.getElementById(`${nodeId}-help`);
-                                if(nodeStatus === "1" || nodeStatus === "2") {
-                                    if(requests[nodeId] && requests[nodeId].status === nodeStatus) {
+
+                                // added for now, delete later
+                                if(requests[nodeId]) {
+                                    if((requests[nodeId].status === 1 && (nodeStatus === 1 || nodeStatus === 3)) ||
+                                        (requests[nodeId].status === 2 && (nodeStatus === 2 || nodeStatus === 4))) {
+                                        // helpDiv.innerText = "";
+                                        helpDiv.style.visibility = "hidden";
+                                    }
+                                } else {
+                                    // helpDiv.innerText = "";
+                                    helpDiv.style.visibility = "hidden";
+                                }
+
+                                /* comment for now
+                                if(["1","2","5","6"].includes(nodeStatus)) {
+                                    if(requests[nodeId]) {
+                                        if(requests[nodeId].status === nodeStatus) {
+                                            helpDiv.innerText = "";
+                                            helpDiv.style.visibility = "hidden";
+                                        }
+                                    } else {
                                         helpDiv.innerText = "";
                                         helpDiv.style.visibility = "hidden";
                                     }
-                                } else if(nodeStatus === "3" || nodeStatus === "4") {
+                                } else if(["3","4","7","8"].includes(nodeStatus)) {
                                     // node.prop("disabled", true);
+
                                     helpDiv.innerText = nodeStatus === "3" ? "شیر در حال باز شدن..." : "شیر در حال بسته شدن...";
                                     helpDiv.classList.remove("alert-warning");
                                     helpDiv.classList.remove("alert-danger");
                                     helpDiv.classList.add("alert-info");
                                     helpDiv.style.visibility = "visible";
-                                }
+                                }*/
                             }
 
                             var alarmDiv = document.getElementById(`${nodeId}-alarm`);
                             switch (nodeAlarmCode) {
-                                case "10":
+                                case "28":
                                     alarmDiv.innerText = "نیاز به شارژ باطری";
                                     alarmDiv.style.visibility = "visible";
                                     break;
-                                case "5":
+                                case "29":
                                     alarmDiv.innerText = "احتمال قطعی ارتباط با کنترلر";
                                     alarmDiv.style.visibility = "visible";
                                     break;
@@ -238,10 +267,10 @@
                             }
 
                             if(requests[nodeId]) {
-                                if(nodeWait !== requests[nodeId].status) { // send request again
+                                if(nodeWait != requests[nodeId].status) { // send request again
                                     if(requests[nodeId].count < 5) {
                                         requests[nodeId].count++;
-                                        sendMessage("s-iis-"+device,`{"func":"PutVCS","main_id":${device},"valve_id":${nodeId},"status":${requests[nodeId].status}}`);
+                                        sendMessage("s-iis-"+device,`{"func":"PutVCS","main_id":${device},"valve_id":${nodeId},"status":${requests[nodeId].status},"valve_open_timeout":3600,"irr_turn":0}`);
                                     } else {
                                         // clear requests[nodeId]
                                         requests[nodeId] = null;
@@ -266,12 +295,14 @@
             }
         }
 
-        function modeChange(newMode) {
-            let target = $(".btn-valve"), allBtns = $(".mode"), activeBtn = $(`#${newMode}`);
+        function modeChange(newMode, changeInDB=false) {
+            let target = $(".btn-valve"), allBtns = $(".mode"), activeBtn = $(`#mode-${newMode}`);
 
-            if(newMode==="manual") {
+            console.log("newMode",newMode);
+
+            if(newMode === "1") {
                 target.prop("disabled", false);
-            } else if(newMode==="intelligent") {
+            } else if(newMode === "0") {
                 target.prop("disabled", true);
             } else {
                 //
@@ -281,6 +312,24 @@
             allBtns.addClass("btn-outline-info");
             activeBtn.removeClass("btn-outline-info");
             activeBtn.addClass("btn-info");
+
+            if(changeInDB) {
+                // close pump
+                let pump = device + 991, pid = 1, status = 2;
+                sendMessage(`s-iis-${pump}`,`{"func":"PutPCS","main_id":${device},"pump_id":${pid},"status":${status},"irr_turn":0}`);
+
+                // close all valves
+                let id = device;
+                setInterval(function() {
+                    id++;
+                    sendMessage(`s-iis-${device}`,`{"func":"PutVCS","main_id":${device},"valve_id":${id},"status":${status},"valve_open_timeout":3600,"irr_turn":0}`);
+                }, 5000);
+
+                $.ajax("", {
+                    type:"post",
+
+                });
+            }
         }
     </script>
 @endsection

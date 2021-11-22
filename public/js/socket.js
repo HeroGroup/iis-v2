@@ -10,7 +10,6 @@ function setTopic(input) {
     tpc = input;
     attemptConnect();
 }
-// attemptConnect();
 
 function attemptConnect() {
     client.connect({
@@ -39,11 +38,19 @@ function onConnectionLost(responseObject) {
 }
 
 function onMessageArrived(message) {
-    console.log("Message Arrived: " + message.payloadString);
-    parseMessage(message.payloadString);
+    parseMessage(removeAllWhitespace(message.payloadString));
 }
 
 function sendMessage(topic, message) {
-    // client.subscribe(topic);
-    client.send(topic, message);
+    try {
+        client.send(topic, message);
+        return true;
+    } catch (e) {
+        alert("شما آفلاین هستید. ابتدا از اتصال دستگاه خود به اینترنت اطمینان پیدا کنید. سپس صفحه را refresh نمایید.");
+        return false;
+    }
+}
+
+function removeAllWhitespace(input) {
+    return input.replace(/ /g,'');
 }

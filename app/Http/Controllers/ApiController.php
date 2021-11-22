@@ -78,6 +78,43 @@ class ApiController extends Controller
         // $request->year
         // $request->month
 
-        return $this->success("success", [$request->type,$request->year,$request->month]);
+        return $this->success("success", [$request->type, $request->year, $request->month]);
     }
+
+    public function postPumpData(Request $request)
+    {
+        // {"func":"PostPCI","main_id":1001000,"pump_id":1,"flow":[0,4],"status":2,"alarm":"32","reset":0,"irr_turn":5,"signal":67}
+
+        $mainController = $request->main_id;
+        $pumpId = substr($mainController,0,4) . '99' . $request->pump_id;
+
+        // insert into sensorhistories
+
+        DB::table('sensorhistories')->insert([
+            'ControllerID' => $pumpId,
+            'ControllerTypeID' => 3, // Pump Controller
+            'IrrigationTurnID' => $request->irr_turn,
+            'SensorFeatureValue' => 12, // Flow Meter 1 sensor id
+            'SensorFeatureDate' => $request->flows[0]
+        ]);
+
+        DB::table('sensorhistories')->insert([
+            'ControllerID' => $pumpId,
+            'ControllerTypeID' => 3, // Pump Controller
+            'IrrigationTurnID' => $request->irr_turn,
+            'SensorFeatureValue' => 13, // Flow Meter 2 sensor id
+            'SensorFeatureDate' => $request->flows[1]
+        ]);
+
+        DB::table('sensorhistories')->insert([
+            'ControllerID' => $pumpId,
+            'ControllerTypeID' => 3, // Pump Controller
+            'IrrigationTurnID' => $request->irr_turn,
+            'SensorFeatureValue' => 16, // Well Pump Status sensor id
+            'SensorFeatureDate' => $request->status
+        ]);
+
+        return $this->success("data stored successfully");
+    }
+
 }

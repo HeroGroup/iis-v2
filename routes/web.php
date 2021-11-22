@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 
+Route::get('/encode', 'ApiController@encode')->name('encode');
+Route::get('/decode', 'ApiController@decode')->name('decode');
+
 Route::get('/login', 'SiteController@getLogin')->name('site.getLogin');
 Route::post('/login', 'SiteController@postLogin')->name('site.postLogin');
 
@@ -12,6 +15,9 @@ Route::middleware('sessionAuth')->group(function () {
         Route::get('/settings', 'SiteController@water')->name('settings');
         Route::get('/reports', 'SiteController@reports')->name('reports');
         Route::get('/about', 'SiteController@about')->name('about');
+        Route::get('/checkIfAtLeastOneValveIsOpen/{device}', 'SiteController@checkIfAtLeastOneValveIsOpen')->name('checkIfAtLeastOneValveIsOpen');
+
+        Route::post('/changeMode', 'SiteController@changeMode')->name('changeMode');
     });
 });
 
