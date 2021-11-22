@@ -15,12 +15,12 @@ Route::middleware('sessionAuth')->group(function () {
         Route::get('/settings', 'SiteController@water')->name('settings');
         Route::get('/reports', 'SiteController@reports')->name('reports');
         Route::get('/configuration', 'SiteController@configuration')->name('configuration');
-        // Route::put('/configuration/{city}', 'SiteController@updateCity')->name('cities.update');
         Route::post('/configuration', 'SiteController@store')->name('config.store');
         Route::get('/about', 'SiteController@about')->name('about');
-        Route::get('/valveSensors/{valve}', 'SiteController@getValveSensors')->name('getValveSensors');
-        Route::get('/checkIfAtLeastOneValveIsOpen/{device}', 'SiteController@checkIfAtLeastOneValveIsOpen')->name('checkIfAtLeastOneValveIsOpen');
 
+        Route::get('/valveSensors/{valve}', 'SiteController@getValveSensors')->name('getValveSensors');
+
+        Route::get('/checkIfAtLeastOneValveIsOpen/{device}', 'SiteController@checkIfAtLeastOneValveIsOpen')->name('checkIfAtLeastOneValveIsOpen');
         Route::post('/changeMode', 'SiteController@changeMode')->name('changeMode');
     });
 });
