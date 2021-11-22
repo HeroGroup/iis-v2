@@ -15,7 +15,7 @@ class SiteController extends Controller
 
     public function postLogin(Request $request)
     {
-        $device = DB::table('devices')
+        $device = DB::table('maincontrollers')
             ->where('SerialNumber','LIKE',$request->device_code)->get();
 
         if($device->count() == 1) {
@@ -56,18 +56,11 @@ class SiteController extends Controller
     {
         $device = session('device_code');
         $deviceId = session('device_id');
-        $valves = DB::table('valvecontrollers')->where('DeviceID',$deviceId)->get(['ID','StatusID']);
-
-//        dd($deviceId,$device,$valves);
-//
-//        $valves = [
-//            ['title' => 'شیر برقی 1', 'name' => '01', 'checked' => false],
-//            ['title' => 'شیر برقی 2', 'name' => '02', 'checked' => false],
-//            ['title' => 'شیر برقی 3', 'name' => '03', 'checked' => false],
-//            ['title' => 'شیر برقی 4', 'name' => '04', 'checked' => false],
-//            ['title' => 'شیر برقی 5', 'name' => '05', 'checked' => false],
-//            ['title' => 'شیر برقی 6', 'name' => '06', 'checked' => false]
-//        ];
+        $valves = DB::table('zones')
+            ->join('valvecontrollers','zones.ID','valvecontrollers.ZoneID')
+            ->where('zones.MainControllerID',$deviceId)
+            ->select('valvecontrollers.ID','valvecontrollers.StatusID')
+            ->get();
 
         return view('site.home', compact('device','valves'));
 
@@ -86,6 +79,42 @@ class SiteController extends Controller
         return view('site.reports', compact('years', 'months'));
     }
 
+    public function configuration()
+    {
+        $deviceId = session('device_id');
+        $valves = DB::table('zones')
+            ->join('valvecontrollers','zones.ID','valvecontrollers.ZoneID')
+            ->where('zones.MainControllerID',$deviceId)
+            ->select('valvecontrollers.ID','valvecontrollers.StatusID')
+            ->pluck('valvecontrollers.ID','valvecontrollers.ID');
+            
+            
+        $sensors=DB::table('sensorfeatures')
+             ->select('ID','SensorFeatureName','StatusID')
+             ->where('StatusID','=', 8)
+             ->get();
+           
+        return view('site.configuration', compact('sensors','valves'));
+    }
+   
+    public function store(Request $request)
+    {
+        $data = $request->mysensors; 
+        $id=$request->valve_id;
+         
+         DB::table('dataloggersensors')->where('ControllerID', $id)->delete();
+                
+        foreach($data as $key => $value) {
+            DB::table('dataloggersensors')->insert([
+            'ControllerID' =>$id,
+            'SensorFeatureID' => $key,
+            'StatusID'=>8
+            ]);
+        }
+        
+        return back()->withInput(); 
+    }
+   
     public function about()
     {
         return view('site.about');
@@ -95,6 +124,12 @@ class SiteController extends Controller
     {
         // if mode is about to change, pump should be closed first
         // then all valves must be closed as follows
+    }
+
+    public function getValveSensors($valve)
+    {
+        $sensors = DB::table('dataloggersensors')->where('ControllerID',$valve)->get();
+        return $this->success("success", $sensors);
     }
 
 }
