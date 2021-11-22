@@ -24,6 +24,7 @@ class SiteController extends Controller
                 session([
                     'device_code' => $request->device_code,
                     'device_id' => $device->ID,
+                    'device_name' => $device->MainControllerName,
                     'logged_in' => true
                 ]);
                 return $request->ajax ? $this->success("success", ['version' => 'v2']) : redirect(route('site.home'));
@@ -43,6 +44,7 @@ class SiteController extends Controller
             session([
                 'device_code' => null,
                 'device_id' => null,
+                'device_name' => null,
                 'logged_in' => false
             ]);
 
@@ -56,13 +58,7 @@ class SiteController extends Controller
     {
         $device = session('device_code');
         $deviceId = session('device_id');
-        /*
-        $valves = DB::table('zones')
-            ->join('valvecontrollers', 'zones.ID', '=', 'valvecontrollers.ZoneID')
-            ->where('zones.MainControllerID',$deviceId)
-            ->select(DB::raw('SUBSTR(valvecontrollers.ID,7) AS ID, valvecontrollers.StatusID, zones.ID as zoneID, zones.MasterZoneID'))
-            ->get();
-        */
+
         $zones = DB::table('zones')
             ->join('valvecontrollers', 'zones.ID', '=', 'valvecontrollers.ZoneID')
             ->where('zones.MainControllerID',$deviceId)
@@ -113,32 +109,32 @@ class SiteController extends Controller
     {
         $deviceId = session('device_id');
         $valves = DB::table('zones')
-            ->join('valvecontrollers','zones.ID','valvecontrollers.ZoneID')
-            ->where('zones.MainControllerID',$deviceId)
-            ->select('valvecontrollers.ID','valvecontrollers.StatusID')
-            ->pluck('valvecontrollers.ID','valvecontrollers.ID');
+            ->join('valvecontrollers', 'zones.ID', 'valvecontrollers.ZoneID')
+            ->where('zones.MainControllerID', $deviceId)
+            ->select('valvecontrollers.ID', 'valvecontrollers.StatusID')
+            ->pluck('valvecontrollers.ID', 'valvecontrollers.ID');
 
 
-        $sensors=DB::table('sensorfeatures')
-             ->select('ID','SensorFeatureName','StatusID')
-             ->where('StatusID','=', 8)
-             ->get();
+        $sensors = DB::table('sensorfeatures')
+            ->select('ID', 'SensorFeatureName', 'StatusID')
+            ->where('StatusID', '=', 12)
+            ->get();
 
-        return view('site.configuration', compact('sensors','valves'));
+        return view('site.configuration', compact('sensors', 'valves'));
     }
 
     public function store(Request $request)
     {
         $data = $request->mysensors;
-        $id=$request->valve_id;
+        $controllerId = $request->valve_id;
 
-         DB::table('dataloggersensors')->where('ControllerID', $id)->delete();
+        DB::table('dataloggersensors')->where('ControllerID', $controllerId)->delete();
 
-        foreach($data as $key => $value) {
+        foreach ($data as $key => $value) {
             DB::table('dataloggersensors')->insert([
-            'ControllerID' =>$id,
-            'SensorFeatureID' => $key,
-            'StatusID'=>8
+                'ControllerID' => $controllerId,
+                'SensorFeatureID' => $key,
+                'StatusID' => 12
             ]);
         }
 

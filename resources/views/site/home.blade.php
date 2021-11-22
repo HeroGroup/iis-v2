@@ -1,4 +1,4 @@
-@extends('layouts.main', ['title' => 'تنظیمات', 'active' => 'home', 'mainID' => $device])
+@extends('layouts.main', ['title' => 'تنظیمات', 'active' => 'home'])
 @section('content')
     <style>
         #wait {

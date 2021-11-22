@@ -21,14 +21,16 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div id="content" class="col-sm-6" style="margin-right: 55px;margin-top:20px">
+                        <div id="content" style="margin-right: 55px;margin-top:20px">
+                            <div class="row">
                             @foreach ($sensors as $sensor)
-                                <div class="col-md-6">
+                                <div class="col-md-4" style="margin:5px 0;">
                                     <input type="checkbox" name="mysensors[{{ $sensor->ID }}]"
-                                        id="sensor-{{ $sensor->ID }}">
+                                           id="sensor-{{ $sensor->ID }}">
                                     <span>{{ $sensor->SensorFeatureName }} </span>
                                 </div>
                             @endforeach
+                            </div>
                         </div>
                     </div>
                     <div class="col-sm-12" style="justify-content: center;display:flex;">
